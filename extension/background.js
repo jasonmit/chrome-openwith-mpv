@@ -292,6 +292,22 @@ async function pausePlaybackForTab(tabId) {
   }
 }
 
+async function refreshActiveTab() {
+  await new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tab = tabs?.[0];
+      if (tab?.id) {
+        try {
+          await refreshActionForTab(tab.id, tab.url);
+        } catch (error) {
+          console.warn("Chrome Open with mpv active tab probe failed:", error.message);
+        }
+      }
+      resolve();
+    });
+  });
+}
+
 async function openInMpv(url, referer, userAgent, startTime) {
   url = normalizePlaybackUrl(url);
   if (!isHttpUrl(url)) {
@@ -407,14 +423,11 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ["link"],
   });
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs?.[0];
-    if (tab?.id) {
-      refreshActionForTab(tab.id, tab.url).catch((error) => {
-        console.warn("Chrome Open with mpv init probe failed:", error.message);
-      });
-    }
-  });
+  refreshActiveTab();
+});
+
+chrome.runtime.onStartup?.addListener(() => {
+  refreshActiveTab();
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {

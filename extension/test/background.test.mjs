@@ -12,6 +12,7 @@ test("pauses playback after mpv launch completes", async () => {
         callback({ ok: true });
       },
       onInstalled: { addListener() {} },
+      onStartup: { addListener() {} },
     },
     action: {
       enable() {},
@@ -67,6 +68,56 @@ test("pauses playback after mpv launch completes", async () => {
     ["native", { url: "https://www.youtube.com/watch?v=rb3THmr4j2c", start_time: 12.34 }],
     ["probe", true],
   ]);
+});
 
-  delete globalThis.chrome;
+test("refreshes the active tab on browser startup", async () => {
+  let startupListener;
+  const calls = [];
+
+  globalThis.chrome = {
+    runtime: {
+      lastError: null,
+      sendNativeMessage(_host, _message, callback) {
+        callback({ ok: true });
+      },
+      onInstalled: { addListener() {} },
+      onStartup: {
+        addListener(callback) {
+          startupListener = callback;
+        },
+      },
+    },
+    action: {
+      enable() {},
+      disable() {},
+      setIcon() {},
+      onClicked: { addListener() {} },
+    },
+    scripting: {
+      executeScript(_options, callback) {
+        callback([{ result: { pageUrl: "https://example.com", userAgent: "Mozilla/5.0", candidates: [] } }]);
+      },
+    },
+    tabs: {
+      query(_query, callback) {
+        calls.push("query");
+        callback([{ id: 1, url: "https://example.com" }]);
+      },
+      get(_tabId, callback) {
+        callback({});
+      },
+      onActivated: { addListener() {} },
+      onUpdated: { addListener() {} },
+    },
+    contextMenus: {
+      create() {},
+      onClicked: { addListener() {} },
+    },
+  };
+
+  await import(`../background.js?startup-${Date.now()}`);
+
+  assert.equal(typeof startupListener, "function");
+  await startupListener();
+  assert.deepEqual(calls, ["query"]);
 });
