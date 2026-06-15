@@ -13,6 +13,13 @@ Linux only.
 
 ## Install
 
+Requirements:
+
+- `mpv`
+- `yt-dlp`
+- `xdotool` for X11/XWayland window detection (optional, but recommended)
+- `ytdl-raw-options=cookies-from-browser=brave` in `~/.config/mpv/mpv.conf` if you want Twitch and other cookie-gated sites
+
 From the repository root, run:
 
 ```bash
