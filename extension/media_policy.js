@@ -10,6 +10,15 @@ function isYoutubeUrl(url) {
   return parsed.hostname === "youtu.be" || parsed.hostname.endsWith("youtube.com") || parsed.hostname.endsWith("youtube-nocookie.com");
 }
 
+function isTwitchUrl(url) {
+  if (typeof url !== "string" || !PLAYABLE_URL.test(url)) {
+    return false;
+  }
+
+  const parsed = new URL(url);
+  return parsed.hostname === "twitch.tv" || parsed.hostname.endsWith(".twitch.tv");
+}
+
 function isDirectMediaUrl(url) {
   return typeof url === "string" && PLAYABLE_URL.test(url) && MEDIA_URL.test(url);
 }
@@ -75,7 +84,7 @@ function shouldProbePage(url) {
 }
 
 function shouldEnableAction(url, candidates, playbackState) {
-  if (isYoutubeUrl(url) || isDirectMediaUrl(url)) {
+  if (isYoutubeUrl(url) || isTwitchUrl(url) || isDirectMediaUrl(url)) {
     return true;
   }
 
@@ -174,4 +183,4 @@ function pickBestPlaybackState(states) {
   return best;
 }
 
-export { buildPlaybackHeaders, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, scoreCandidate, scorePlaybackState, shouldAttachPlaybackHeaders, shouldEnableAction, shouldIncludePlaybackStartTime, shouldProbePage, isDirectMediaUrl };
+export { buildPlaybackHeaders, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, scoreCandidate, scorePlaybackState, shouldAttachPlaybackHeaders, shouldEnableAction, shouldIncludePlaybackStartTime, shouldProbePage, isDirectMediaUrl, isTwitchUrl };

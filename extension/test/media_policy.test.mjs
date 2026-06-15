@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildPlaybackHeaders,
+  isTwitchUrl,
   normalizePlaybackUrl,
   pickBestCandidate,
   pickBestPlaybackState,
@@ -60,7 +61,11 @@ test("normalizes twitch player urls to channel urls", () => {
 
 test("recognizes direct media urls", () => {
   assert.equal(isDirectMediaUrl("https://cdn.example.com/live.m3u8"), true);
-  assert.equal(isDirectMediaUrl("https://player.twitch.tv/?channel=lieth&parent=twitch.tv"), false);
+  assert.equal(isDirectMediaUrl("https://player.twitch.tv/?channel=ohnepixel&parent=twitch.tv"), false);
+});
+
+test("recognizes twitch urls", () => {
+  assert.equal(isTwitchUrl("https://www.twitch.tv/ohnepixel"), true);
 });
 
 test("does not attach playback headers to youtube watch urls", () => {
@@ -82,6 +87,10 @@ test("prefers the visible playback state for start time", () => {
 
 test("enables action for youtube urls", () => {
   assert.equal(shouldEnableAction("https://www.youtube.com/watch?v=rb3THmr4j2c", [], null), true);
+});
+
+test("enables action for twitch urls", () => {
+  assert.equal(shouldEnableAction("https://www.twitch.tv/ohnepixel", [], null), true);
 });
 
 test("does not include playback start time for twitch urls", () => {

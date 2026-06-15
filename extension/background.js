@@ -1,4 +1,4 @@
-import { buildPlaybackHeaders, isDirectMediaUrl, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, shouldAttachPlaybackHeaders, shouldEnableAction, shouldIncludePlaybackStartTime, shouldProbePage } from "./media_policy.js";
+import { buildPlaybackHeaders, isDirectMediaUrl, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, shouldAttachPlaybackHeaders, shouldIncludePlaybackStartTime, shouldProbePage } from "./media_policy.js";
 
 const HOST_NAME = "com.jasonmit.chrome_openwith_mpv";
 const IDLE_ICON = "icons/mpv.png";
@@ -41,14 +41,6 @@ function sendNativeMessage(message) {
       resolve(response);
     });
   });
-}
-
-function setActionEnabled(tabId, enabled) {
-  if (enabled) {
-    chrome.action.enable(tabId);
-  } else {
-    chrome.action.disable(tabId);
-  }
 }
 
 function setIdleIcon() {
@@ -313,22 +305,6 @@ async function mutePlaybackForTab(tabId) {
   }
 }
 
-async function refreshActiveTab() {
-  await new Promise((resolve) => {
-    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-      const tab = tabs?.[0];
-      if (tab?.id) {
-        try {
-          await refreshActionForTab(tab.id, tab.url);
-        } catch (error) {
-          console.warn("Chrome Open with mpv active tab probe failed:", error.message);
-        }
-      }
-      resolve();
-    });
-  });
-}
-
 async function openInMpv(url, referer, userAgent, startTime) {
   url = normalizePlaybackUrl(url);
   if (!isHttpUrl(url)) {
@@ -404,44 +380,6 @@ async function openLinkInMpv(linkUrl, pageUrl) {
   await openInMpv(linkUrl, pageUrl || linkUrl, navigator.userAgent, undefined);
 }
 
-async function refreshActionForTab(tabId, tabUrl) {
-  if (!tabId) {
-    return;
-  }
-
-  const liveTab = await getTab(tabId);
-  if (!liveTab) {
-    setActionEnabled(tabId, false);
-    return;
-  }
-
-  tabUrl = liveTab.url || tabUrl;
-
-  if (!isHttpUrl(tabUrl)) {
-    setActionEnabled(tabId, false);
-    return;
-  }
-
-  let playbackState = null;
-  let pageData = null;
-
-  try {
-    playbackState = await probePlaybackState(tabId, false);
-  } catch (error) {
-    console.warn("Chrome Open with mpv action probe failed:", error.message);
-  }
-
-  if (shouldProbePage(tabUrl)) {
-    try {
-      pageData = await probeTab(tabId, tabUrl);
-    } catch (error) {
-      console.warn("Chrome Open with mpv page probe failed:", error.message);
-    }
-  }
-
-  setActionEnabled(tabId, shouldEnableAction(tabUrl, pageData?.candidates || [], playbackState?.state));
-}
-
 chrome.runtime.onInstalled.addListener(() => {
   setIdleIcon();
 
@@ -455,30 +393,6 @@ chrome.runtime.onInstalled.addListener(() => {
     id: "open-link-with-mpv",
     title: "Open link in mpv",
     contexts: ["link"],
-  });
-
-  refreshActiveTab();
-});
-
-chrome.runtime.onStartup?.addListener(() => {
-  refreshActiveTab();
-});
-
-chrome.tabs.onActivated.addListener(({ tabId }) => {
-  chrome.tabs.get(tabId, (tab) => {
-    refreshActionForTab(tabId, tab?.url).catch((error) => {
-      console.warn("Chrome Open with mpv activation probe failed:", error.message);
-    });
-  });
-});
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status !== "complete") {
-    return;
-  }
-
-  refreshActionForTab(tabId, tab?.url).catch((error) => {
-    console.warn("Chrome Open with mpv update probe failed:", error.message);
   });
 });
 

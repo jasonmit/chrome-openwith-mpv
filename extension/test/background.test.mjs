@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-test("pauses playback after mpv launch completes", async () => {
+test("launches mpv and mutes the source tab", async () => {
   const events = [];
   const updates = [];
 
@@ -13,7 +13,6 @@ test("pauses playback after mpv launch completes", async () => {
         callback({ ok: true });
       },
       onInstalled: { addListener() {} },
-      onStartup: { addListener() {} },
     },
     action: {
       enable() {},
@@ -45,9 +44,6 @@ test("pauses playback after mpv launch completes", async () => {
       },
     },
     tabs: {
-      query(_query, callback) {
-        callback([]);
-      },
       get(_tabId, callback) {
         callback({ id: 1, url: "https://www.youtube.com/watch?v=rb3THmr4j2c" });
       },
@@ -73,104 +69,4 @@ test("pauses playback after mpv launch completes", async () => {
     ["native", { url: "https://www.youtube.com/watch?v=rb3THmr4j2c", start_time: 12.34 }],
   ]);
   assert.deepEqual(updates, [[1, { muted: true }]]);
-});
-
-test("refreshes the active tab on browser startup", async () => {
-  let startupListener;
-  const calls = [];
-
-  globalThis.chrome = {
-    runtime: {
-      lastError: null,
-      sendNativeMessage(_host, _message, callback) {
-        callback({ ok: true });
-      },
-      onInstalled: { addListener() {} },
-      onStartup: {
-        addListener(callback) {
-          startupListener = callback;
-        },
-      },
-    },
-    action: {
-      enable() {},
-      disable() {},
-      setIcon() {},
-      onClicked: { addListener() {} },
-    },
-    scripting: {
-      executeScript(_options, callback) {
-        callback([{ result: { pageUrl: "https://example.com", userAgent: "Mozilla/5.0", candidates: [] } }]);
-      },
-    },
-    tabs: {
-      query(_query, callback) {
-        calls.push("query");
-        callback([{ id: 1, url: "https://example.com" }]);
-      },
-      get(_tabId, callback) {
-        callback({});
-      },
-      update() {},
-      onActivated: { addListener() {} },
-      onUpdated: { addListener() {} },
-    },
-    contextMenus: {
-      create() {},
-      onClicked: { addListener() {} },
-    },
-  };
-
-  await import(`../background.js?startup-${Date.now()}`);
-
-  assert.equal(typeof startupListener, "function");
-  await startupListener();
-  assert.deepEqual(calls, ["query"]);
-});
-
-test("ignores stale tabs instead of throwing", async () => {
-  const events = [];
-
-  globalThis.chrome = {
-    runtime: {
-      lastError: null,
-      sendNativeMessage(_host, message, callback) {
-        events.push(["native", message]);
-        callback({ ok: true });
-      },
-      onInstalled: { addListener() {} },
-      onStartup: { addListener() {} },
-    },
-    action: {
-      enable() {},
-      disable() {},
-      setIcon() {},
-      onClicked: { addListener() {} },
-    },
-    scripting: {
-      executeScript() {
-        throw new Error("should not execute");
-      },
-    },
-    tabs: {
-      get(_tabId, callback) {
-        callback(undefined);
-      },
-      query(_query, callback) {
-        callback([]);
-      },
-      update() {},
-      onActivated: { addListener() {} },
-      onUpdated: { addListener() {} },
-    },
-    contextMenus: {
-      create() {},
-      onClicked: { addListener() {} },
-    },
-  };
-
-  const module = await import(`../background.js?stale-${Date.now()}`);
-
-  await assert.doesNotReject(() => module.openBestMediaForTab({ id: 999, url: "https://example.com" }));
-  assert.deepEqual(events, []);
 });
