@@ -1,0 +1,55 @@
+# chrome-openwith-mpv
+
+Local Chromium extension and native messaging host for opening the current page, embedded media, or a link in `mpv`.
+
+## Platform
+
+Linux only.
+
+- Tested with Brave and Google Chrome on Linux desktop.
+- Native messaging install paths use Linux `~/.config/...` locations.
+- The host uses `xdotool` for window-waiting when available, so X11 or XWayland is the expected desktop setup.
+- Not supported on macOS or Windows.
+
+## Install
+
+From the repository root, run:
+
+```bash
+script="$PWD/native/chrome_openwith_mpv.py"
+for host_dir in \
+  "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts" \
+  "$HOME/.config/google-chrome/NativeMessagingHosts"
+do
+  mkdir -p "$host_dir"
+  cat > "$host_dir/com.jasonmit.chrome_openwith_mpv.json" <<EOF
+{
+  "name": "com.jasonmit.chrome_openwith_mpv",
+  "description": "Open URLs from Chromium browsers in mpv",
+  "path": "$script",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://gmclpcnmgokfgcgdjgmaaiojepmnjjlf/"
+  ]
+}
+EOF
+done
+chmod 755 "$script"
+```
+
+Load the extension once in each browser you use:
+
+- Open `brave://extensions` or `chrome://extensions`.
+- Enable Developer mode.
+- Select Load unpacked.
+- Choose the `extension` directory in this repo.
+
+## Use
+
+- Click the toolbar button to inspect the current page for playable media and open the best candidate in `mpv`.
+- Right-click a page and choose `Open page in mpv`.
+- Right-click a link and choose `Open link in mpv`.
+
+When the extension finds a direct stream URL, it also sends `Referer` and `User-Agent` headers to `mpv`.
+
+The native host only accepts `http://` and `https://` URLs.

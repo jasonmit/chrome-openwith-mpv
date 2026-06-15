@@ -1,0 +1,9 @@
+{
+  "name": "com.jasonmit.chrome_openwith_mpv",
+  "description": "Open URLs from Chromium browsers in mpv",
+  "path": "/absolute/path/to/chrome-openwith-mpv/native/chrome_openwith_mpv.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://gmclpcnmgokfgcgdjgmaaiojepmnjjlf/"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Open with mpv",
+  "version": "0.1.0",
+  "description": "Open the current Brave tab, embedded media, or selected link in mpv.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAosOSXAKGXTPOSfPRHdmYmf9xk3Fntkx/EXCZSm4Ja+/zYHFw32BqnCo+fQr75Wz0DE2EVGng9odMculmZKJoYwaI+ijJMDhInHK3iqZaRrozCmcjDg2kotnBYhF5u6Dhqf5AGPl8x6O/iScF5zmG/5EI0H0YbTs/uvoXbaRzKkfeRn6+21ka0JpeSX/sGlH9DYwrx0C1KXoQdxalAoTdOirQM6XnsmsA0XJ3axSaF1xO/yRP4KqgUjEKBh+VfIRcQDaLBGdY7OJ2JM3WA3eJbWmZjTstZxroE31/LVeSzQK6OQLMKX2Pll5iWtYljCLIDPXf9tmPU4RghV2AfjdnxwIDAQAB",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "nativeMessaging",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open current tab in mpv",
+    "default_icon": "icons/mpv.png"
+  }
+}
