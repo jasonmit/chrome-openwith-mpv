@@ -280,6 +280,18 @@ async function probePlaybackState(tabId, pausePlayback) {
   return { pageUrl, userAgent, state: pickBestPlaybackState(states) };
 }
 
+async function pausePlaybackForTab(tabId) {
+  if (!tabId) {
+    return;
+  }
+
+  try {
+    await probePlaybackState(tabId, true);
+  } catch (error) {
+    console.warn("Chrome Open with mpv pause probe failed:", error.message);
+  }
+}
+
 async function openInMpv(url, referer, userAgent, startTime) {
   url = normalizePlaybackUrl(url);
   if (!isHttpUrl(url)) {
@@ -310,7 +322,7 @@ async function openBestMediaForTab(tab) {
 
   let playbackState = null;
   try {
-    playbackState = await probePlaybackState(tab.id, true);
+    playbackState = await probePlaybackState(tab.id, false);
   } catch (error) {
     console.warn("Chrome Open with mpv playback probe failed:", error.message);
   }
@@ -332,10 +344,12 @@ async function openBestMediaForTab(tab) {
 
   if (candidate?.url && candidate.url !== pageUrl && (!isTwitchPage || isDirectMediaUrl(candidate.url))) {
     await openInMpv(candidate.url, pageUrl, userAgent, startTime);
+    await pausePlaybackForTab(tab.id);
     return;
   }
 
   await openInMpv(pageUrl, pageUrl, userAgent, startTime);
+  await pausePlaybackForTab(tab.id);
 }
 
 async function openLinkInMpv(linkUrl, pageUrl) {
@@ -441,3 +455,5 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     });
   }
 });
+
+export { openBestMediaForTab };
