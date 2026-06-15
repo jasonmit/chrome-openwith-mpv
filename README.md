@@ -1,6 +1,6 @@
 # chrome-openwith-mpv
 
-Local Chromium extension and native messaging host for opening the current page, embedded media, or a link in `mpv`.
+Send browser media to `mpv` for better playback, controls, and hw acceleration.
 
 ## Platform
 
