@@ -53,3 +53,5 @@ Load the extension once in each browser you use:
 When the extension finds a direct stream URL, it also sends `Referer` and `User-Agent` headers to `mpv`.
 
 The native host only accepts `http://` and `https://` URLs.
+
+YouTube and Twitch are supported. DRM-protected sites like Netflix are not supported.
