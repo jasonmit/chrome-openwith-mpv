@@ -110,6 +110,19 @@ function executeScript(target, func, args = []) {
   });
 }
 
+function getTab(tabId) {
+  return new Promise((resolve) => {
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError || !tab) {
+        resolve(null);
+        return;
+      }
+
+      resolve(tab);
+    });
+  });
+}
+
 function scanPageForMedia(pageUrl) {
   const MEDIA_URL = /\.(m3u8|mpd|mp4|mkv|webm|mov)(\?|#|$)/i;
   const seen = new Set();
@@ -280,15 +293,23 @@ async function probePlaybackState(tabId, pausePlayback) {
   return { pageUrl, userAgent, state: pickBestPlaybackState(states) };
 }
 
-async function pausePlaybackForTab(tabId) {
+async function mutePlaybackForTab(tabId) {
   if (!tabId) {
     return;
   }
 
   try {
-    await probePlaybackState(tabId, true);
+    await new Promise((resolve, reject) => {
+      chrome.tabs.update(tabId, { muted: true }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
+        resolve();
+      });
+    });
   } catch (error) {
-    console.warn("Chrome Open with mpv pause probe failed:", error.message);
+    console.warn("Chrome Open with mpv mute failed:", error.message);
   }
 }
 
@@ -330,7 +351,12 @@ async function openInMpv(url, referer, userAgent, startTime) {
 }
 
 async function openBestMediaForTab(tab) {
-  const fallbackUrl = tab?.url;
+  const liveTab = tab?.id ? await getTab(tab.id) : null;
+  if (!liveTab) {
+    return;
+  }
+
+  const fallbackUrl = liveTab.url;
   if (!isHttpUrl(fallbackUrl)) {
     console.warn("Chrome Open with mpv: unsupported tab URL", fallbackUrl);
     return;
@@ -360,12 +386,12 @@ async function openBestMediaForTab(tab) {
 
   if (candidate?.url && candidate.url !== pageUrl && (!isTwitchPage || isDirectMediaUrl(candidate.url))) {
     await openInMpv(candidate.url, pageUrl, userAgent, startTime);
-    await pausePlaybackForTab(tab.id);
+    await mutePlaybackForTab(tab.id);
     return;
   }
 
   await openInMpv(pageUrl, pageUrl, userAgent, startTime);
-  await pausePlaybackForTab(tab.id);
+  await mutePlaybackForTab(tab.id);
 }
 
 async function openLinkInMpv(linkUrl, pageUrl) {
@@ -382,6 +408,14 @@ async function refreshActionForTab(tabId, tabUrl) {
   if (!tabId) {
     return;
   }
+
+  const liveTab = await getTab(tabId);
+  if (!liveTab) {
+    setActionEnabled(tabId, false);
+    return;
+  }
+
+  tabUrl = liveTab.url || tabUrl;
 
   if (!isHttpUrl(tabUrl)) {
     setActionEnabled(tabId, false);

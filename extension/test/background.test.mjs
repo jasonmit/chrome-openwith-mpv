@@ -3,6 +3,7 @@ import test from "node:test";
 
 test("pauses playback after mpv launch completes", async () => {
   const events = [];
+  const updates = [];
 
   globalThis.chrome = {
     runtime: {
@@ -48,6 +49,10 @@ test("pauses playback after mpv launch completes", async () => {
         callback([]);
       },
       get(_tabId, callback) {
+        callback({ id: 1, url: "https://www.youtube.com/watch?v=rb3THmr4j2c" });
+      },
+      update(_tabId, _updateProperties, callback) {
+        updates.push([_tabId, _updateProperties]);
         callback({});
       },
       onActivated: { addListener() {} },
@@ -66,8 +71,8 @@ test("pauses playback after mpv launch completes", async () => {
   assert.deepEqual(events, [
     ["probe", false],
     ["native", { url: "https://www.youtube.com/watch?v=rb3THmr4j2c", start_time: 12.34 }],
-    ["probe", true],
   ]);
+  assert.deepEqual(updates, [[1, { muted: true }]]);
 });
 
 test("refreshes the active tab on browser startup", async () => {
@@ -106,6 +111,7 @@ test("refreshes the active tab on browser startup", async () => {
       get(_tabId, callback) {
         callback({});
       },
+      update() {},
       onActivated: { addListener() {} },
       onUpdated: { addListener() {} },
     },
@@ -120,4 +126,51 @@ test("refreshes the active tab on browser startup", async () => {
   assert.equal(typeof startupListener, "function");
   await startupListener();
   assert.deepEqual(calls, ["query"]);
+});
+
+test("ignores stale tabs instead of throwing", async () => {
+  const events = [];
+
+  globalThis.chrome = {
+    runtime: {
+      lastError: null,
+      sendNativeMessage(_host, message, callback) {
+        events.push(["native", message]);
+        callback({ ok: true });
+      },
+      onInstalled: { addListener() {} },
+      onStartup: { addListener() {} },
+    },
+    action: {
+      enable() {},
+      disable() {},
+      setIcon() {},
+      onClicked: { addListener() {} },
+    },
+    scripting: {
+      executeScript() {
+        throw new Error("should not execute");
+      },
+    },
+    tabs: {
+      get(_tabId, callback) {
+        callback(undefined);
+      },
+      query(_query, callback) {
+        callback([]);
+      },
+      update() {},
+      onActivated: { addListener() {} },
+      onUpdated: { addListener() {} },
+    },
+    contextMenus: {
+      create() {},
+      onClicked: { addListener() {} },
+    },
+  };
+
+  const module = await import(`../background.js?stale-${Date.now()}`);
+
+  await assert.doesNotReject(() => module.openBestMediaForTab({ id: 999, url: "https://example.com" }));
+  assert.deepEqual(events, []);
 });
