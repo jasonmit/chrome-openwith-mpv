@@ -15,6 +15,7 @@ Linux only.
 
 Requirements:
 
+- `node`
 - `mpv`
 - `yt-dlp`
 - `xdotool` for X11/XWayland window detection (optional, but recommended)
@@ -23,7 +24,7 @@ Requirements:
 From the repository root, run:
 
 ```bash
-script="$PWD/native/chrome_openwith_mpv.py"
+script="$PWD/native/chrome_openwith_mpv.js"
 for host_dir in \
   "$HOME/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts" \
   "$HOME/.config/google-chrome/NativeMessagingHosts"
