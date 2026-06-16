@@ -6,7 +6,7 @@ Send browser media to `mpv` for better playback, controls, and hw acceleration.
 
 https://github.com/user-attachments/assets/e9fc88fa-5238-4f52-9ec2-5dd1067d6ee6
 
-
+(Recorded at low fps)
 
 ## Platform
 
