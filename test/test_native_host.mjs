@@ -60,6 +60,14 @@ test("launches http url with headers", () => {
   ]);
 });
 
+test("build launch args skips empty headers", () => {
+  const host = loadHost();
+
+  const args = host.buildLaunchArgs("https://www.twitch.tv/ohnepixel", {});
+
+  assert.equal(args.some((arg) => arg.startsWith("--http-header-fields=")), false);
+});
+
 test("launches http url with start time", () => {
   const host = loadHost();
   const launched = [];

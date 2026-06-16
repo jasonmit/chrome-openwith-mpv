@@ -45,7 +45,7 @@ function buildLaunchArgs(url, headers = null, start_time = null) {
   if (isYoutubeUrl(url)) {
     ensureYoutubeProfile();
     args.push(`--config-dir=${YOUTUBE_CONFIG_DIR}`);
-  } else if (headers) {
+  } else if (headers && Object.keys(headers).length > 0) {
     const headerFields = Object.entries(headers).map(([name, value]) => `${name}: ${value}`).join(", ");
     args.push(`--http-header-fields=${headerFields}`);
   }
