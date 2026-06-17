@@ -101,9 +101,22 @@ test("disables action when no media is detected", () => {
   assert.equal(shouldEnableAction("https://example.com/article", [], null), false);
 });
 
-test("enables action when media candidate exists", () => {
+test("enables action for visible playback state", () => {
+  assert.equal(
+    shouldEnableAction("https://example.com/article", [], {
+      hasVideo: true,
+      visible: true,
+      pip: false,
+      fullscreen: false,
+      playing: false,
+    }),
+    true
+  );
+});
+
+test("does not enable action when only a media candidate exists", () => {
   assert.equal(
     shouldEnableAction("https://example.com/article", [{ url: "https://cdn.example.com/live.m3u8", kind: "resource" }], null),
-    true
+    false
   );
 });

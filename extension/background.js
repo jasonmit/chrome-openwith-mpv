@@ -1,4 +1,4 @@
-import { buildPlaybackHeaders, isDirectMediaUrl, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, shouldAttachPlaybackHeaders, shouldIncludePlaybackStartTime, shouldProbePage } from "./media_policy.js";
+import { buildPlaybackHeaders, isDirectMediaUrl, normalizePlaybackUrl, pickBestCandidate, pickBestPlaybackState, shouldAttachPlaybackHeaders, shouldEnableAction, shouldIncludePlaybackStartTime, shouldProbePage } from "./media_policy.js";
 
 const HOST_NAME = "com.jasonmit.chrome_openwith_mpv";
 const IDLE_ICON = "icons/mpv.png";
@@ -359,6 +359,10 @@ async function openBestMediaForTab(tab) {
   const candidate = pickBestCandidate(pageData?.candidates || [], pageUrl);
   const startTime = shouldIncludePlaybackStartTime(pageUrl) ? playbackState?.state?.currentTime : undefined;
   const isTwitchPage = new URL(pageUrl).hostname.endsWith("twitch.tv");
+
+  if (!shouldEnableAction(pageUrl, pageData?.candidates || [], playbackState?.state || null)) {
+    return;
+  }
 
   if (candidate?.url && candidate.url !== pageUrl && (!isTwitchPage || isDirectMediaUrl(candidate.url))) {
     await openInMpv(candidate.url, pageUrl, userAgent, startTime);

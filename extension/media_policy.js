@@ -88,11 +88,11 @@ function shouldEnableAction(url, candidates, playbackState) {
     return true;
   }
 
-  if (playbackState?.hasVideo) {
+  if (playbackState?.visible || playbackState?.pip || playbackState?.fullscreen || playbackState?.playing) {
     return true;
   }
 
-  return (candidates || []).some((candidate) => typeof candidate?.url === "string" && PLAYABLE_URL.test(candidate.url));
+  return false;
 }
 
 function shouldIncludePlaybackStartTime(url) {
